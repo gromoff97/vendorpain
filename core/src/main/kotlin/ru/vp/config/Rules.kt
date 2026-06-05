@@ -1,5 +1,6 @@
 package ru.vp.config
 
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import ru.vp.error.ExitCode
 import ru.vp.error.VpException
 import java.time.LocalDate
@@ -17,6 +18,7 @@ class Rules {
             o.baseUrl to "options.baseUrl",
             o.outputDir to "options.outputDir",
         ).forEach { (value, field) -> schema(value.isNotBlank(), "$field must not be blank") }
+        url(o.baseUrl, "options.baseUrl")
         auth(o.auth)
 
         val since = date(o.sinceDate, "options.sinceDate")
@@ -59,6 +61,8 @@ class Rules {
     private fun dates(ok: Boolean, message: String) = need(ok, ExitCode.INVALID_DATE_RANGE, message)
     private fun option(ok: Boolean, message: String) = need(ok, ExitCode.INVALID_OPTION_VALUE, message)
     private fun path(ok: Boolean, message: String) = need(ok, ExitCode.INVALID_OUTPUT_PATH, message)
+    private fun url(value: String, field: String) =
+        need(value.toHttpUrlOrNull() != null, ExitCode.INVALID_URL, "$field must be a valid absolute HTTP URL")
 
     private fun need(ok: Boolean, code: ExitCode, message: String) {
         if (!ok) throw VpException(code, message)

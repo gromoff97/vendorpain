@@ -101,6 +101,16 @@ class GraphsClientTest {
     }
 
     @Test
+    fun `http 429 maps to rate limited without retry`() {
+        assertHttpCodeMapsTo(429, ExitCode.RATE_LIMITED)
+    }
+
+    @Test
+    fun `unsupported client error maps to unsupported client error`() {
+        assertHttpCodeMapsTo(400, ExitCode.UNSUPPORTED_CLIENT_ERROR)
+    }
+
+    @Test
     fun `api-like 404 maps to user not found`() {
         assertHttpCodeMapsTo(
             code = 404,

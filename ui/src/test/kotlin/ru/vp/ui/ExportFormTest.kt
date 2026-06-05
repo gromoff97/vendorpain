@@ -1,8 +1,11 @@
 package ru.vp.ui
 
 import ru.vp.bitbucket.BitbucketUser
+import ru.vp.error.ExitCode
+import ru.vp.error.VpException
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class ExportFormTest {
     @Test
@@ -122,5 +125,24 @@ class ExportFormTest {
         assertEquals(null, config.options.auth.username)
         assertEquals(null, config.options.auth.password)
         assertEquals("secret-token", config.options.auth.token)
+    }
+
+    @Test
+    fun `invalid numeric fields fail with explicit exit code`() {
+        val form = ExportForm(
+            graphsBaseUrl = "https://stash.example/rest/awesome-graphs-api/latest",
+            authMethod = "basic",
+            username = "petrov.iv",
+            password = "secret-password",
+            sinceDate = "2026-03-04",
+            untilDate = "2026-06-04",
+            outputDir = "output",
+            timeoutSeconds = "sixty",
+            users = listOf(BitbucketUser("petrov.iv", "petrov.iv", "Петров Игорь", null, true)),
+        )
+
+        val error = assertFailsWith<VpException> { form.config() }
+
+        assertEquals(ExitCode.INVALID_NUMERIC_VALUE, error.exitCode)
     }
 }

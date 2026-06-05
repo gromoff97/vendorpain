@@ -4,8 +4,11 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Credentials
 import ru.vp.config.Auth
+import ru.vp.error.ExitCode
+import ru.vp.error.VpException
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class UserSearchTest {
     @Test
@@ -56,4 +59,60 @@ class UserSearchTest {
             assertEquals(Credentials.basic("petrov.iv", "secret-password"), request.headers["Authorization"])
         }
     }
+
+    @Test
+    fun `rate limited user search maps to rate limited`() {
+        assertHttpCodeMapsTo(429, ExitCode.RATE_LIMITED)
+    }
+
+    @Test
+    fun `unsupported user search client error maps to unsupported client error`() {
+        assertHttpCodeMapsTo(400, ExitCode.UNSUPPORTED_CLIENT_ERROR)
+    }
+
+    @Test
+    fun `malformed user search response maps to malformed response`() {
+        MockWebServer().use { server ->
+            server.start()
+            server.enqueue(
+                MockResponse.Builder()
+                    .code(200)
+                    .setHeader("Content-Type", "application/json")
+                    .body("{broken")
+                    .build(),
+            )
+
+            val error = assertFailsWith<VpException> {
+                users(server).search("petrov")
+            }
+
+            assertEquals(ExitCode.MALFORMED_RESPONSE, error.exitCode)
+        }
+    }
+
+    private fun assertHttpCodeMapsTo(code: Int, expected: ExitCode) {
+        MockWebServer().use { server ->
+            server.start()
+            server.enqueue(
+                MockResponse.Builder()
+                    .code(code)
+                    .setHeader("Content-Type", "application/json")
+                    .body("""{"message":"error"}""")
+                    .build(),
+            )
+
+            val error = assertFailsWith<VpException> {
+                users(server).search("petrov")
+            }
+
+            assertEquals(expected, error.exitCode)
+            assertEquals(1, server.requestCount)
+        }
+    }
+
+    private fun users(server: MockWebServer): BitbucketUsers =
+        BitbucketUsers(
+            baseUrl = server.url("/").toString().removeSuffix("/"),
+            auth = Auth(method = "basic", username = "petrov.iv", password = "secret-password"),
+        )
 }

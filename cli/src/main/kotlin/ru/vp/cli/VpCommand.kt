@@ -16,7 +16,7 @@ internal class VpCommand(
     private val exportAction: (Config, (ExportProgress) -> Unit) -> ExportResult,
     private val stdout: PrintStream,
 ) : Callable<Int> {
-    @Option(names = ["--conf"], required = true, description = ["Path to VP YAML config"])
+    @Option(names = ["--conf"], required = true, description = ["Path to vendorpain YAML config"])
     lateinit var conf: Path
 
     override fun call(): Int {

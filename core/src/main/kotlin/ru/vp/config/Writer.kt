@@ -18,7 +18,7 @@ class Writer {
             path.parent?.let(Files::createDirectories)
             mapper.writeValue(path.toFile(), config)
         } catch (e: IOException) {
-            throw VpException(ExitCode.FILESYSTEM_ERROR, "failed to write config file: $path", e)
+            throw VpException(ExitCode.CONFIG_WRITE_ERROR, "failed to write config file: $path", e)
         }
     }
 }

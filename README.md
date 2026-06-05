@@ -1,6 +1,6 @@
-# VP
+# vendorpain
 
-VP is a small Kotlin/JVM CLI utility for batch-exporting Awesome Graphs for Bitbucket user commit activity as CSV files.
+vendorpain is a small Kotlin/JVM utility for batch-exporting Awesome Graphs for Bitbucket user commit activity as CSV files.
 
 It can run as a CLI from YAML or as a Kotlin Compose desktop UI. Both entry points use the same core export code.
 
@@ -100,15 +100,15 @@ To route Bitbucket and Awesome Graphs HTTP requests through an SSH host, replace
     strictHostKeyChecking: false
 ```
 
-At least `password` or `privateKeyPath` must be set. VP stays local and writes output locally; only HTTP traffic to Bitbucket/Awesome Graphs is routed through the SSH connection.
+At least `password` or `privateKeyPath` must be set. vendorpain stays local and writes output locally; only HTTP traffic to Bitbucket/Awesome Graphs is routed through the SSH connection.
 
-`baseUrl` must be the full Awesome Graphs REST API base. VP appends only:
+`baseUrl` must be the full Awesome Graphs REST API base. vendorpain appends only:
 
 ```text
 /users/{slug}/commits/export/csv
 ```
 
-By default VP uses HTTP Basic auth:
+By default vendorpain uses HTTP Basic auth:
 
 ```http
 Authorization: Basic <base64(username:password)>
@@ -142,19 +142,19 @@ For the current real-environment verification work, external tests are routed on
 
 `outputDir` must not already exist.
 
-For each slug, VP writes:
+For each slug, vendorpain writes:
 
 ```text
 {outputDir}/{path...}/{slug}-{sinceDate}_{untilDate}-commits.csv
 ```
 
-When `archive: true`, VP also creates:
+When `archive: true`, vendorpain also creates:
 
 ```text
 {outputDir}.zip
 ```
 
-When `debug: true`, VP writes:
+When `debug: true`, vendorpain writes:
 
 ```text
 {outputDir}/vp-debug.log
@@ -172,6 +172,9 @@ When `debug: true`, VP writes:
 | `13` | Invalid config schema |
 | `14` | Invalid date range or date format |
 | `15` | Invalid option value |
+| `16` | Invalid URL |
+| `17` | Invalid numeric value |
+| `18` | Config write failure |
 | `20` | `outputDir` already exists |
 | `21` | Filesystem create/write error |
 | `22` | Invalid output path segment, duplicate export path, or duplicate slug |
@@ -180,9 +183,13 @@ When `debug: true`, VP writes:
 | `32` | Awesome Graphs endpoint not found or unavailable |
 | `33` | User slug not found |
 | `34` | HTTP 200 but non-CSV response |
+| `35` | Bitbucket or Awesome Graphs rate limit |
+| `36` | Unsupported HTTP 4xx response |
+| `37` | Malformed upstream response |
 | `40` | Network timeout/connect failure |
 | `41` | HTTP 5xx after retries |
 | `42` | SSH tunnel failure |
+| `43` | TLS/certificate failure |
 | `50` | Archive already exists |
 | `51` | Archive creation failure |
 | `99` | Unexpected internal error |

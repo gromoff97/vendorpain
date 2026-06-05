@@ -146,6 +146,23 @@ class ExporterTest {
     }
 
     @Test
+    fun `filesystem write failure maps to filesystem error`() {
+        val parentFile = tempDir.resolve("not-a-directory")
+        Files.writeString(parentFile, "file")
+        val exporter = Exporter(
+            clients = {
+                CsvSource { slug -> csvResult(slug, "$slug,csv\n") }
+            },
+        )
+
+        val error = assertFailsWith<VpException> {
+            exporter.export(config(outputDir = parentFile.resolve("output")))
+        }
+
+        assertEquals(ExitCode.FILESYSTEM_ERROR, error.exitCode)
+    }
+
+    @Test
     fun `closes csv source after export`() {
         val source = CloseAwareSource()
         val exporter = Exporter(
@@ -178,6 +195,7 @@ class ExporterTest {
         debug: Boolean = false,
         archive: Boolean = false,
         slugs: List<String> = listOf("petrov.iv"),
+        outputDir: Path = tempDir.resolve("output"),
     ): Config = Config(
         options = Options(
             baseUrl = "https://stash.example/rest/awesome-graphs-api/latest",
@@ -186,7 +204,7 @@ class ExporterTest {
             untilDate = "2026-06-04",
             merges = "exclude",
             order = "newest",
-            outputDir = tempDir.resolve("output").toString(),
+            outputDir = outputDir.toString(),
             archive = archive,
             debug = debug,
             insecure = false,

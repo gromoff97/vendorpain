@@ -7,6 +7,7 @@ import ru.vp.config.Options
 import ru.vp.error.ExitCode
 import ru.vp.error.VpException
 import ru.vp.net.HttpAccess
+import ru.vp.net.NetworkErrors
 import java.io.IOException
 
 class GraphsClient(
@@ -21,15 +22,20 @@ class GraphsClient(
     }
 
     override fun downloadCsv(slug: String): CsvResult {
-        val req = request(slug)
+        val req = try {
+            request(slug)
+        } catch (e: IllegalArgumentException) {
+            throw VpException(ExitCode.INVALID_URL, "invalid Awesome Graphs API URL: ${options.baseUrl}", e)
+        }
         var tries = 1
         while (true) {
             try {
                 fetch(req, slug, tries)?.let { return it }
             } catch (e: IOException) {
                 if (!retry(tries)) {
+                    val code = NetworkErrors.classify(e)
                     throw VpException(
-                        ExitCode.NETWORK_ERROR,
+                        code,
                         "network error while downloading CSV for user '$slug' after $tries attempts",
                         e,
                     )
@@ -94,6 +100,7 @@ class GraphsClient(
             200 -> return
             401 -> throw VpException(ExitCode.AUTHENTICATION_FAILED, "authentication failed while downloading CSV")
             403 -> throw VpException(ExitCode.PERMISSION_DENIED, "permission denied while downloading CSV for user '$slug'")
+            429 -> throw VpException(ExitCode.RATE_LIMITED, "Awesome Graphs rate limited CSV download for user '$slug'")
             404 -> {
                 val code = if (csv.looksLikeHtml(type, bytes)) {
                     ExitCode.ENDPOINT_NOT_FOUND
@@ -103,7 +110,7 @@ class GraphsClient(
                 fail(code, "Awesome Graphs returned HTTP 404 for user '$slug'")
             }
             in 400..499 -> throw VpException(
-                ExitCode.INTERNAL_ERROR,
+                ExitCode.UNSUPPORTED_CLIENT_ERROR,
                 "Awesome Graphs returned unsupported HTTP $status for user '$slug'",
             )
             else -> throw VpException(

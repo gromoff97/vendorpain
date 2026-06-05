@@ -39,7 +39,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.Rpm)
-            packageName = "vp-ui"
+            packageName = "vendorpain-ui"
             packageVersion = project.version.toString()
         }
     }

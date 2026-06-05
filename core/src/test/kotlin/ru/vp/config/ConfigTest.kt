@@ -116,6 +116,17 @@ class ConfigTest {
     }
 
     @Test
+    fun `invalid base url fails with invalid url code`() {
+        assertValidationCode(
+            yaml = validYaml().replace(
+                "baseUrl: \"https://stash.nspk.ru/rest/awesome-graphs-api/latest\"",
+                "baseUrl: \"not a url\"",
+            ),
+            expected = ExitCode.INVALID_URL,
+        )
+    }
+
+    @Test
     fun `exports must be non empty`() {
         assertValidationCode(
             yaml = validYaml().substringBefore("exports:") + "exports: []\n",

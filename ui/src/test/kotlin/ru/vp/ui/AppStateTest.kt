@@ -2,9 +2,18 @@ package ru.vp.ui
 
 import org.junit.jupiter.api.io.TempDir
 import ru.vp.bitbucket.BitbucketUser
+import ru.vp.config.Auth
+import ru.vp.config.Config
+import ru.vp.config.Group
+import ru.vp.config.Options
+import ru.vp.error.ExitCode
+import ru.vp.error.VpException
+import ru.vp.export.ExportProgress
+import ru.vp.export.ExportResult
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class AppStateTest {
     @TempDir
@@ -93,6 +102,58 @@ class AppStateTest {
         assertEquals(true, captured.single().sshEnabled)
     }
 
+    @Test
+    fun `search appends runtime log entry`() {
+        val state = AppState(
+            usersFactory = {
+                FakeUserSearch(listOf(BitbucketUser("petrov.iv", "petrov.iv", "Петров", null, true)))
+            },
+        )
+        state.form = state.form.copy(
+            bitbucketBaseUrl = "https://stash.example",
+            authMethod = "basic",
+            username = "admin",
+            password = "secret",
+        )
+        state.query = "pet"
+
+        state.show(state.search())
+
+        assertTrue(state.logs.any { it.contains("search pet -> 1 users") })
+    }
+
+    @Test
+    fun `done and fail append runtime log entries`() {
+        val state = AppState()
+        val dir = tempDir.resolve("output")
+
+        state.done(ExportResult(dir = dir, zip = tempDir.resolve("output.zip"), files = 3))
+        state.fail(VpException(ExitCode.RATE_LIMITED, "rate limited"))
+
+        assertTrue(state.logs.any { it.contains("export completed: 3 files") })
+        assertTrue(state.logs.any { it.contains("error ${ExitCode.RATE_LIMITED.code}: rate limited") })
+    }
+
+    @Test
+    fun `export uses injected mock exporter and records progress`() {
+        val config = validConfig()
+        val state = AppState(
+            exporter = { loaded, progress ->
+                assertEquals(config, loaded)
+                progress(ExportProgress(0, 1, "petrov.iv", tempDir.resolve("output/petrov.iv.csv")))
+                ExportResult(tempDir.resolve("output"), null, 1)
+            },
+        )
+
+        val result = state.export(config)
+        state.done(result)
+
+        assertEquals(1, result.files)
+        assertEquals("petrov.iv", state.progress.slug)
+        assertTrue(state.logs.any { it.contains("exporting 1/1: petrov.iv") })
+        assertTrue(state.logs.any { it.contains("export completed: 1 files") })
+    }
+
     private class FakeUserSearch(
         private val users: List<BitbucketUser>,
     ) : UserSearch {
@@ -121,4 +182,23 @@ class AppStateTest {
             saved = path
         }
     }
+
+    private fun validConfig(): Config =
+        Config(
+            options = Options(
+                baseUrl = "https://stash.example/rest/awesome-graphs-api/latest",
+                auth = Auth(method = "basic", username = "petrov.iv", password = "secret-password"),
+                sinceDate = "2026-03-04",
+                untilDate = "2026-06-04",
+                merges = "exclude",
+                order = "newest",
+                outputDir = tempDir.resolve("output").toString(),
+                archive = false,
+                debug = false,
+                insecure = false,
+                timeoutSeconds = 60,
+                retries = 0,
+            ),
+            exports = listOf(Group(path = emptyList(), slugs = listOf("petrov.iv"))),
+        )
 }

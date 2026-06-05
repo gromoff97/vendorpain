@@ -96,6 +96,20 @@ class CliTest {
     }
 
     @Test
+    fun `unexpected exception is mapped to internal error`() {
+        val streams = Streams()
+
+        val code = VpCli(
+            configLoader = { validConfig() },
+            exportAction = { _, _ -> error("boom") },
+        ).execute(arrayOf("--conf", "vendors.yml"), stdout = streams.stdout, stderr = streams.stderr)
+
+        assertEquals(ExitCode.INTERNAL_ERROR.code, code)
+        assertTrue(streams.errText().contains("unexpected internal error"))
+        assertFalse(streams.errText().contains("boom"))
+    }
+
+    @Test
     fun `missing insecure option returns invalid config schema`() {
         val streams = Streams()
         val configPath = tempDir.resolve("vendors.yml")

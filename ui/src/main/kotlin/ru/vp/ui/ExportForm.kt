@@ -6,6 +6,8 @@ import ru.vp.config.Group
 import ru.vp.config.Auth
 import ru.vp.config.Options
 import ru.vp.config.Ssh
+import ru.vp.error.ExitCode
+import ru.vp.error.VpException
 
 data class UiExportGroup(
     val name: String = "Group",
@@ -55,8 +57,8 @@ data class ExportForm(
                 archive = archive,
                 debug = debug,
                 insecure = insecure,
-                timeoutSeconds = timeoutSeconds.toInt(),
-                retries = retries.toInt(),
+                timeoutSeconds = number(timeoutSeconds, "timeoutSeconds"),
+                retries = number(retries, "retries"),
                 ssh = ssh(),
             ),
             exports = exportGroups(),
@@ -107,7 +109,7 @@ data class ExportForm(
         if (sshEnabled) {
             Ssh(
                 host = sshHost,
-                port = sshPort.toInt(),
+                port = number(sshPort, "sshPort"),
                 user = sshUser,
                 password = sshPassword.ifBlank { null },
                 privateKeyPath = sshPrivateKeyPath.ifBlank { null },
@@ -118,4 +120,8 @@ data class ExportForm(
         } else {
             null
         }
+
+    private fun number(value: String, field: String): Int =
+        value.toIntOrNull()
+            ?: throw VpException(ExitCode.INVALID_NUMERIC_VALUE, "$field must be an integer")
 }

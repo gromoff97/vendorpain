@@ -11,10 +11,12 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -29,6 +31,7 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import kotlinx.coroutines.Dispatchers
@@ -51,29 +55,41 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.vp.bitbucket.BitbucketUser
 import ru.vp.config.Auth
+import java.awt.Dimension
 import java.nio.file.Path
 import javax.swing.JFileChooser
 
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
-        title = "VP",
-        state = rememberWindowState(width = 1280.dp, height = 900.dp),
+        title = "vendorpain",
+        state = rememberWindowState(width = 1560.dp, height = 1000.dp, placement = WindowPlacement.Maximized),
+        resizable = true,
     ) {
+        LaunchedEffect(Unit) {
+            window.minimumSize = Dimension(1180, 760)
+        }
         MaterialTheme(
             colors = MaterialTheme.colors.copy(
-                primary = BitbucketTheme.primary,
-                secondary = BitbucketTheme.primary,
-                background = BitbucketTheme.background,
-                surface = BitbucketTheme.surface,
-                error = BitbucketTheme.error,
+                primary = VendorpainTheme.brand,
+                secondary = VendorpainTheme.brand,
+                background = VendorpainTheme.background,
+                surface = VendorpainTheme.surface,
+                error = VendorpainTheme.danger,
                 onPrimary = Color.White,
-                onSurface = BitbucketTheme.text,
-                onBackground = BitbucketTheme.text,
+                onSurface = VendorpainTheme.text,
+                onBackground = VendorpainTheme.text,
             ),
         ) {
-            Surface(Modifier.fillMaxSize(), color = BitbucketTheme.background) {
-                VpApp()
+            Surface(Modifier.fillMaxSize(), color = VendorpainTheme.background) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .border(BorderStroke(VendorpainTheme.frameWidth, VendorpainTheme.brandBold))
+                        .background(VendorpainTheme.background),
+                ) {
+                    VpApp()
+                }
             }
         }
     }
@@ -103,10 +119,10 @@ private fun VpApp(state: AppState = remember { AppState() }) {
         AppHeader(state)
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(VendorpainTheme.space200),
+            verticalArrangement = Arrangement.spacedBy(VendorpainTheme.space150),
         ) {
             ConnectionSection(state)
             PeopleGroupsSection(state)
@@ -125,6 +141,7 @@ private fun VpApp(state: AppState = remember { AppState() }) {
                 }
             }
         }
+        RuntimeLogPanel(state)
     }
 }
 
@@ -133,14 +150,14 @@ private fun AppHeader(state: AppState) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(BitbucketTheme.header)
-            .padding(horizontal = 18.dp, vertical = 12.dp),
+            .background(VendorpainTheme.brandBold)
+            .padding(horizontal = VendorpainTheme.space250, vertical = VendorpainTheme.space150),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Bitbucket", color = Color.White, style = MaterialTheme.typography.h6, fontWeight = FontWeight.SemiBold)
-            Text("VP CSV export", color = Color.White.copy(alpha = 0.82f), style = MaterialTheme.typography.body2)
+        Row(horizontalArrangement = Arrangement.spacedBy(VendorpainTheme.space200), verticalAlignment = Alignment.CenterVertically) {
+            Text("vendorpain", color = Color.White, style = MaterialTheme.typography.h6, fontWeight = FontWeight.SemiBold)
+            Text("Bitbucket activity CSV", color = Color.White.copy(alpha = 0.82f), style = MaterialTheme.typography.body2)
         }
         Text(
             state.currentConfigPath?.fileName?.toString() ?: "No config loaded",
@@ -196,8 +213,8 @@ private fun GroupRow(state: AppState, index: Int, group: UiExportGroup) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .border(BorderStroke(1.dp, if (index == state.activeGroupIndex) BitbucketTheme.primary else BitbucketTheme.border), RoundedCornerShape(4.dp))
-            .background(BitbucketTheme.subtleSurface, RoundedCornerShape(4.dp))
+            .border(BorderStroke(1.dp, if (index == state.activeGroupIndex) VendorpainTheme.primary else VendorpainTheme.border), RoundedCornerShape(4.dp))
+            .background(VendorpainTheme.subtleSurface, RoundedCornerShape(4.dp))
             .padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -216,7 +233,7 @@ private fun GroupRow(state: AppState, index: Int, group: UiExportGroup) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             group.users.forEach { user -> UserChip(user) { state.removeFromGroup(index, user) } }
             if (group.users.isEmpty()) {
-                Text("No users selected", color = BitbucketTheme.muted, style = MaterialTheme.typography.body2)
+                Text("No users selected", color = VendorpainTheme.muted, style = MaterialTheme.typography.body2)
             }
         }
     }
@@ -279,16 +296,42 @@ private fun RunSection(state: AppState, export: () -> Unit) = Section("Run") {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         PrimaryButton(if (state.running) "Exporting" else "Export", enabled = !state.running, onClick = export)
         if (state.progress.total > 0) {
-            Text("${state.progress.done}/${state.progress.total}", color = BitbucketTheme.muted)
+            Text("${state.progress.done}/${state.progress.total}", color = VendorpainTheme.muted)
         }
     }
     if (state.running || state.progress.total > 0) {
         val value = if (state.progress.total == 0) 0f else state.progress.done.toFloat() / state.progress.total
-        LinearProgressIndicator(progress = value, modifier = Modifier.fillMaxWidth(), color = BitbucketTheme.primary)
-        Text(state.progress.slug?.let { "Exporting $it" } ?: "Idle", color = BitbucketTheme.muted)
+        LinearProgressIndicator(progress = value, modifier = Modifier.fillMaxWidth(), color = VendorpainTheme.primary)
+        Text(state.progress.slug?.let { "Exporting $it" } ?: "Idle", color = VendorpainTheme.muted)
     }
     if (state.message.isNotBlank()) {
-        Text(state.message, color = if (state.running) BitbucketTheme.muted else BitbucketTheme.text)
+        Text(state.message, color = if (state.running) VendorpainTheme.muted else VendorpainTheme.text)
+    }
+}
+
+@Composable
+private fun RuntimeLogPanel(state: AppState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .background(VendorpainTheme.surfaceSunken)
+            .border(BorderStroke(1.dp, VendorpainTheme.border))
+            .padding(VendorpainTheme.space150),
+        verticalArrangement = Arrangement.spacedBy(VendorpainTheme.space050),
+    ) {
+        Text("Debug log", style = MaterialTheme.typography.caption, fontWeight = FontWeight.SemiBold, color = VendorpainTheme.textSubtle)
+        val scroll = rememberScrollState()
+        SelectionContainer {
+            Text(
+                state.logs.takeLast(80).joinToString("\n"),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scroll),
+                color = VendorpainTheme.text,
+                style = MaterialTheme.typography.body2,
+            )
+        }
     }
 }
 
@@ -297,20 +340,20 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(BitbucketTheme.surface, RoundedCornerShape(4.dp))
-            .border(BorderStroke(1.dp, BitbucketTheme.border), RoundedCornerShape(4.dp))
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .background(VendorpainTheme.surface, RoundedCornerShape(VendorpainTheme.radius))
+            .border(BorderStroke(1.dp, VendorpainTheme.border), RoundedCornerShape(VendorpainTheme.radius))
+            .padding(VendorpainTheme.space150),
+        verticalArrangement = Arrangement.spacedBy(VendorpainTheme.space100),
     ) {
-        Text(title, style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.SemiBold, color = BitbucketTheme.text)
+        Text(title, style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.SemiBold, color = VendorpainTheme.text)
         content()
     }
 }
 
 @Composable
 private fun UserChip(user: BitbucketUser, remove: () -> Unit) {
-    OutlinedButton(onClick = remove, border = BorderStroke(1.dp, BitbucketTheme.border)) {
-        Text("${user.slug} x", color = BitbucketTheme.primary)
+    OutlinedButton(onClick = remove, border = BorderStroke(1.dp, VendorpainTheme.border)) {
+        Text("${user.slug} x", color = VendorpainTheme.primary)
     }
 }
 
@@ -322,6 +365,8 @@ private fun Field(label: String, value: String, modifier: Modifier = Modifier.fi
         label = { Text(label) },
         singleLine = true,
         modifier = modifier,
+        shape = RoundedCornerShape(VendorpainTheme.radius),
+        colors = fieldColors(),
     )
 }
 
@@ -334,6 +379,8 @@ private fun SecretField(label: String, value: String, modifier: Modifier = Modif
         visualTransformation = PasswordVisualTransformation(),
         singleLine = true,
         modifier = modifier,
+        shape = RoundedCornerShape(VendorpainTheme.radius),
+        colors = fieldColors(),
     )
 }
 
@@ -361,9 +408,9 @@ private fun Check(label: String, checked: Boolean, change: (Boolean) -> Unit) {
         Checkbox(
             checked = checked,
             onCheckedChange = change,
-            colors = CheckboxDefaults.colors(checkedColor = BitbucketTheme.primary),
+            colors = CheckboxDefaults.colors(checkedColor = VendorpainTheme.primary),
         )
-        Text(label, color = BitbucketTheme.text)
+        Text(label, color = VendorpainTheme.text)
     }
 }
 
@@ -372,7 +419,8 @@ private fun PrimaryButton(text: String, enabled: Boolean = true, onClick: () -> 
     Button(
         onClick = onClick,
         enabled = enabled,
-        colors = ButtonDefaults.buttonColors(backgroundColor = BitbucketTheme.primary, contentColor = Color.White),
+        shape = RoundedCornerShape(VendorpainTheme.radius),
+        colors = ButtonDefaults.buttonColors(backgroundColor = VendorpainTheme.brand, contentColor = Color.White),
     ) {
         Text(text)
     }
@@ -380,10 +428,25 @@ private fun PrimaryButton(text: String, enabled: Boolean = true, onClick: () -> 
 
 @Composable
 private fun SecondaryButton(text: String, onClick: () -> Unit) {
-    OutlinedButton(onClick = onClick, border = BorderStroke(1.dp, BitbucketTheme.border)) {
-        Text(text, color = BitbucketTheme.primary)
+    OutlinedButton(
+        onClick = onClick,
+        shape = RoundedCornerShape(VendorpainTheme.radius),
+        border = BorderStroke(1.dp, VendorpainTheme.border),
+        colors = ButtonDefaults.outlinedButtonColors(backgroundColor = VendorpainTheme.surface),
+    ) {
+        Text(text, color = VendorpainTheme.brand)
     }
 }
+
+@Composable
+private fun fieldColors() = TextFieldDefaults.outlinedTextFieldColors(
+    textColor = VendorpainTheme.text,
+    focusedBorderColor = VendorpainTheme.brand,
+    unfocusedBorderColor = VendorpainTheme.border,
+    focusedLabelColor = VendorpainTheme.brand,
+    unfocusedLabelColor = VendorpainTheme.textSubtle,
+    cursorColor = VendorpainTheme.brand,
+)
 
 private fun chooseDir(current: String): String? {
     val chooser = JFileChooser(current.ifBlank { "." })
