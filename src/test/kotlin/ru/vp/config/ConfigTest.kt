@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class ConfigValidatorTest {
+class ConfigTest {
     @TempDir
     lateinit var tempDir: Path
 
@@ -39,7 +39,7 @@ class ConfigValidatorTest {
         file.writeText("options:\n  baseUrl: [")
 
         val error = assertFailsWith<VpException> {
-            ConfigLoader().load(file)
+            Loader().load(file)
         }
 
         assertEquals(ExitCode.INVALID_YAML, error.exitCode)
@@ -119,10 +119,10 @@ class ConfigValidatorTest {
         )
     }
 
-    private fun load(yaml: String): VpConfig {
+    private fun load(yaml: String): Config {
         val file = tempDir.resolve("vendors.yml")
         file.writeText(yaml)
-        return ConfigLoader().load(file)
+        return Loader().load(file)
     }
 
     private fun assertValidationCode(yaml: String, expected: ExitCode) {

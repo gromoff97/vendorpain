@@ -2,14 +2,14 @@ package ru.vp.awesomegraphs
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import ru.vp.config.OptionsConfig
+import ru.vp.config.Options
 import ru.vp.error.ExitCode
 import ru.vp.error.VpException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class AwesomeGraphsClientTest {
+class GraphsClientTest {
     @Test
     fun `downloads csv with expected URL query and bearer token`() {
         MockWebServer().use { server ->
@@ -180,8 +180,8 @@ class AwesomeGraphsClientTest {
         timeoutSeconds: Int = 5,
         retries: Int = 0,
         sleepMillis: (Long) -> Unit = {},
-    ): AwesomeGraphsClient = AwesomeGraphsClient(
-        options = OptionsConfig(
+    ): GraphsClient = GraphsClient(
+        options = Options(
             baseUrl = baseUrl,
             token = "secret-token",
             sinceDate = "2026-03-04",
@@ -194,7 +194,7 @@ class AwesomeGraphsClientTest {
             timeoutSeconds = timeoutSeconds,
             retries = retries,
         ),
-        sleepMillis = sleepMillis,
+        sleep = sleepMillis,
     )
 
     private fun csvResponse(body: String): MockResponse =

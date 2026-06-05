@@ -10,7 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class ZipArchiverTest {
+class ZipTest {
     @TempDir
     lateinit var tempDir: Path
 
@@ -22,10 +22,10 @@ class ZipArchiverTest {
         Files.writeString(nestedDir.resolve("petrov.iv.csv"), "hash\nabc\n")
         val archivePath = tempDir.resolve("output.zip")
 
-        val result = ZipArchiver().archive(outputDir, archivePath)
+        val result = Zip().archive(outputDir, archivePath)
 
-        assertEquals(archivePath, result.archivePath)
-        assertEquals(1, result.entriesWritten)
+        assertEquals(archivePath, result.path)
+        assertEquals(1, result.entries)
         ZipFile(archivePath.toFile()).use { zip ->
             val entry = zip.getEntry("Аутсорсинг/ООО Ромашка/petrov.iv.csv")
             assertEquals("hash\nabc\n", zip.getInputStream(entry).readAllBytes().toString(Charsets.UTF_8))
@@ -40,7 +40,7 @@ class ZipArchiverTest {
         Files.writeString(archivePath, "already exists")
 
         val error = assertFailsWith<VpException> {
-            ZipArchiver().archive(outputDir, archivePath)
+            Zip().archive(outputDir, archivePath)
         }
 
         assertEquals(ExitCode.ARCHIVE_EXISTS, error.exitCode)
@@ -54,7 +54,7 @@ class ZipArchiverTest {
         Files.writeString(notDirectory, "file")
 
         val error = assertFailsWith<VpException> {
-            ZipArchiver().archive(outputDir, notDirectory.resolve("output.zip"))
+            Zip().archive(outputDir, notDirectory.resolve("output.zip"))
         }
 
         assertEquals(ExitCode.ARCHIVE_ERROR, error.exitCode)

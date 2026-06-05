@@ -1,9 +1,9 @@
 package ru.vp.paths
 
 import org.junit.jupiter.api.io.TempDir
-import ru.vp.config.ExportConfig
-import ru.vp.config.OptionsConfig
-import ru.vp.config.VpConfig
+import ru.vp.config.Config
+import ru.vp.config.Group
+import ru.vp.config.Options
 import ru.vp.error.ExitCode
 import ru.vp.error.VpException
 import java.nio.file.Files
@@ -12,7 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class OutputPlannerTest {
+class LayoutTest {
     @TempDir
     lateinit var tempDir: Path
 
@@ -20,16 +20,16 @@ class OutputPlannerTest {
     fun `plans unicode output tree and csv file names without rewriting path segments`() {
         val outputDir = tempDir.resolve("output")
 
-        val plan = OutputPlanner().plan(config(outputDir = outputDir))
+        val plan = Layout().plan(config(outputDir = outputDir))
 
-        assertEquals(outputDir, plan.outputDir)
-        assertEquals(outputDir.resolve("Аутсорсинг").resolve("ООО Ромашка"), plan.files.single().directory)
+        assertEquals(outputDir, plan.dir)
+        assertEquals(outputDir.resolve("Аутсорсинг").resolve("ООО Ромашка"), plan.files.single().dir)
         assertEquals(
             outputDir
                 .resolve("Аутсорсинг")
                 .resolve("ООО Ромашка")
                 .resolve("petrov.iv-2026-03-04_2026-06-04-commits.csv"),
-            plan.files.single().csvPath,
+            plan.files.single().file,
         )
     }
 
@@ -39,7 +39,7 @@ class OutputPlannerTest {
         Files.createDirectory(outputDir)
 
         val error = assertFailsWith<VpException> {
-            OutputPlanner().plan(config(outputDir = outputDir))
+            Layout().plan(config(outputDir = outputDir))
         }
 
         assertEquals(ExitCode.OUTPUT_DIR_EXISTS, error.exitCode)
@@ -51,7 +51,7 @@ class OutputPlannerTest {
         Files.writeString(tempDir.resolve("output.zip"), "already exists")
 
         val error = assertFailsWith<VpException> {
-            OutputPlanner().plan(config(outputDir = outputDir, archive = true))
+            Layout().plan(config(outputDir = outputDir, archive = true))
         }
 
         assertEquals(ExitCode.ARCHIVE_EXISTS, error.exitCode)
@@ -60,7 +60,7 @@ class OutputPlannerTest {
     @Test
     fun `invalid export path segment fails`() {
         val error = assertFailsWith<VpException> {
-            OutputPlanner().plan(config(path = listOf("Vendor", "bad/name")))
+            Layout().plan(config(path = listOf("Vendor", "bad/name")))
         }
 
         assertEquals(ExitCode.INVALID_OUTPUT_PATH, error.exitCode)
@@ -70,8 +70,8 @@ class OutputPlannerTest {
         outputDir: Path = tempDir.resolve("output"),
         archive: Boolean = false,
         path: List<String> = listOf("Аутсорсинг", "ООО Ромашка"),
-    ): VpConfig = VpConfig(
-        options = OptionsConfig(
+    ): Config = Config(
+        options = Options(
             baseUrl = "https://stash.nspk.ru/rest/awesome-graphs-api/latest",
             token = "secret",
             sinceDate = "2026-03-04",
@@ -85,7 +85,7 @@ class OutputPlannerTest {
             retries = 0,
         ),
         exports = listOf(
-            ExportConfig(
+            Group(
                 path = path,
                 slugs = listOf("petrov.iv"),
             ),

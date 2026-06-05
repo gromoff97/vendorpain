@@ -3,7 +3,7 @@ package ru.vp.awesomegraphs
 import ru.vp.error.ExitCode
 import ru.vp.error.VpException
 
-class CsvResponseValidator {
+class CsvGuard {
     fun validate(contentType: String?, bytes: ByteArray) {
         if (looksLikeHtml(contentType, bytes)) {
             throw VpException(ExitCode.NON_CSV_RESPONSE, "Awesome Graphs returned HTML instead of CSV")

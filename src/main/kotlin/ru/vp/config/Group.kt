@@ -1,6 +1,6 @@
 package ru.vp.config
 
-data class ExportConfig(
+data class Group(
     val path: List<String>,
     val slugs: List<String>,
 )

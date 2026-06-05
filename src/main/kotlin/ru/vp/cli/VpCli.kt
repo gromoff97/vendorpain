@@ -1,8 +1,8 @@
 package ru.vp.cli
 
 import picocli.CommandLine
-import ru.vp.config.ConfigLoader
-import ru.vp.config.VpConfig
+import ru.vp.config.Config
+import ru.vp.config.Loader
 import ru.vp.error.ExitCode
 import ru.vp.error.VpException
 import ru.vp.export.ExportResult
@@ -12,8 +12,8 @@ import java.io.PrintWriter
 import java.nio.file.Path
 
 class VpCli(
-    private val configLoader: (Path) -> VpConfig = ConfigLoader()::load,
-    private val exportAction: (VpConfig, PrintStream) -> ExportResult = { config, stdout ->
+    private val configLoader: (Path) -> Config = Loader()::load,
+    private val exportAction: (Config, PrintStream) -> ExportResult = { config, stdout ->
         Exporter(stdout = stdout).export(config)
     },
 ) {

@@ -1,6 +1,6 @@
 package ru.vp.config
 
-data class OptionsConfig(
+data class Options(
     val baseUrl: String,
     val token: String,
     val sinceDate: String,

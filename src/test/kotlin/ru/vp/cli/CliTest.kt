@@ -1,9 +1,9 @@
 package ru.vp.cli
 
 import org.junit.jupiter.api.io.TempDir
-import ru.vp.config.ExportConfig
-import ru.vp.config.OptionsConfig
-import ru.vp.config.VpConfig
+import ru.vp.config.Config
+import ru.vp.config.Group
+import ru.vp.config.Options
 import ru.vp.error.ExitCode
 import ru.vp.error.VpException
 import ru.vp.export.ExportResult
@@ -47,7 +47,7 @@ class CliTest {
     fun `success flow loads config runs exporter and prints summary`() {
         val streams = Streams()
         var loadedPath: Path? = null
-        var exportedConfig: VpConfig? = null
+        var exportedConfig: Config? = null
         val configPath = tempDir.resolve("vendors.yml")
         val config = validConfig()
 
@@ -59,9 +59,9 @@ class CliTest {
             exportAction = { loadedConfig, _ ->
                 exportedConfig = loadedConfig
                 ExportResult(
-                    outputDir = tempDir.resolve("output"),
-                    archivePath = tempDir.resolve("output.zip"),
-                    filesWritten = 2,
+                    dir = tempDir.resolve("output"),
+                    zip = tempDir.resolve("output.zip"),
+                    files = 2,
                 )
             },
         ).execute(arrayOf("--conf", configPath.toString()), stdout = streams.stdout, stderr = streams.stderr)
@@ -90,8 +90,8 @@ class CliTest {
         assertFalse(streams.errText().contains("secret-token"))
     }
 
-    private fun validConfig(): VpConfig = VpConfig(
-        options = OptionsConfig(
+    private fun validConfig(): Config = Config(
+        options = Options(
             baseUrl = "https://stash.example/rest/awesome-graphs-api/latest",
             token = "secret-token",
             sinceDate = "2026-03-04",
@@ -104,7 +104,7 @@ class CliTest {
             timeoutSeconds = 60,
             retries = 0,
         ),
-        exports = listOf(ExportConfig(path = listOf("Vendor"), slugs = listOf("petrov.iv"))),
+        exports = listOf(Group(path = listOf("Vendor"), slugs = listOf("petrov.iv"))),
     )
 
     private class Streams {

@@ -13,14 +13,14 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
-class ConfigLoader(
-    private val validator: ConfigValidator = ConfigValidator(),
+class Loader(
+    private val rules: Rules = Rules(),
 ) {
     private val mapper: ObjectMapper = ObjectMapper(YAMLFactory())
         .registerKotlinModule()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
 
-    fun load(path: Path): VpConfig {
+    fun load(path: Path): Config {
         if (!Files.isRegularFile(path) || !Files.isReadable(path)) {
             throw VpException(ExitCode.CONFIG_NOT_READABLE, "config file is not readable: $path")
         }
@@ -34,7 +34,7 @@ class ConfigLoader(
         }
 
         val config = try {
-            mapper.treeToValue(tree, VpConfig::class.java)
+            mapper.treeToValue(tree, Config::class.java)
         } catch (e: JsonParseException) {
             throw VpException(ExitCode.INVALID_YAML, "invalid YAML syntax in $path", e)
         } catch (e: JsonMappingException) {
@@ -43,6 +43,6 @@ class ConfigLoader(
             throw VpException(ExitCode.CONFIG_NOT_READABLE, "failed to read config file: $path", e)
         }
 
-        return validator.validate(config)
+        return rules.validate(config)
     }
 }

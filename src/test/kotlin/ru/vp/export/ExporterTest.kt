@@ -1,11 +1,11 @@
 package ru.vp.export
 
 import org.junit.jupiter.api.io.TempDir
-import ru.vp.awesomegraphs.CsvDownloadResult
-import ru.vp.awesomegraphs.CsvDownloader
-import ru.vp.config.ExportConfig
-import ru.vp.config.OptionsConfig
-import ru.vp.config.VpConfig
+import ru.vp.awesomegraphs.CsvResult
+import ru.vp.awesomegraphs.CsvSource
+import ru.vp.config.Config
+import ru.vp.config.Group
+import ru.vp.config.Options
 import ru.vp.error.ExitCode
 import ru.vp.error.VpException
 import java.io.ByteArrayOutputStream
@@ -29,8 +29,8 @@ class ExporterTest {
         val stdoutBytes = ByteArrayOutputStream()
         val calls = mutableListOf<String>()
         val exporter = Exporter(
-            downloaderFactory = {
-                CsvDownloader { slug ->
+            clients = {
+                CsvSource { slug ->
                     calls += slug
                     csvResult(slug, "$slug,csv\n")
                 }
@@ -40,7 +40,7 @@ class ExporterTest {
 
         val result = exporter.export(config(slugs = listOf("petrov.iv", "ivanov.ia")))
 
-        assertEquals(2, result.filesWritten)
+        assertEquals(2, result.files)
         assertEquals(listOf("petrov.iv", "ivanov.ia"), calls)
         assertEquals("petrov.iv,csv\n", outputFile("petrov.iv").readText())
         assertEquals("ivanov.ia,csv\n", outputFile("ivanov.ia").readText())
@@ -52,12 +52,12 @@ class ExporterTest {
     @Test
     fun `debug mode writes log and summary without token`() {
         val exporter = Exporter(
-            downloaderFactory = {
-                CsvDownloader { slug ->
+            clients = {
+                CsvSource { slug ->
                     csvResult(
                         slug = slug,
                         body = "hash\nabc\n",
-                        requestUrl = "https://stash.example/rest/awesome-graphs-api/latest/users/$slug/commits/export/csv",
+                        url = "https://stash.example/rest/awesome-graphs-api/latest/users/$slug/commits/export/csv",
                     )
                 }
             },
@@ -82,8 +82,8 @@ class ExporterTest {
     fun `export fails fast and does not continue after first failed slug`() {
         val calls = mutableListOf<String>()
         val exporter = Exporter(
-            downloaderFactory = {
-                CsvDownloader { slug ->
+            clients = {
+                CsvSource { slug ->
                     calls += slug
                     if (slug == "ivanov.ia") {
                         throw VpException(ExitCode.USER_NOT_FOUND, "missing user")
@@ -108,8 +108,8 @@ class ExporterTest {
     @Test
     fun `archive mode creates zip after successful export and records it in debug log`() {
         val exporter = Exporter(
-            downloaderFactory = {
-                CsvDownloader { slug -> csvResult(slug, "$slug,csv\n") }
+            clients = {
+                CsvSource { slug -> csvResult(slug, "$slug,csv\n") }
             },
             stdout = PrintStream(ByteArrayOutputStream()),
         )
@@ -117,7 +117,7 @@ class ExporterTest {
         val result = exporter.export(config(debug = true, archive = true, slugs = listOf("petrov.iv")))
 
         val archivePath = tempDir.resolve("output.zip")
-        assertEquals(archivePath, result.archivePath)
+        assertEquals(archivePath, result.zip)
         ZipFile(archivePath.toFile()).use { zip ->
             val entry = zip.getEntry("Аутсорсинг/ООО Ромашка/petrov.iv-2026-03-04_2026-06-04-commits.csv")
             assertEquals("petrov.iv,csv\n", zip.getInputStream(entry).readAllBytes().toString(Charsets.UTF_8))
@@ -130,8 +130,8 @@ class ExporterTest {
         debug: Boolean = false,
         archive: Boolean = false,
         slugs: List<String> = listOf("petrov.iv"),
-    ): VpConfig = VpConfig(
-        options = OptionsConfig(
+    ): Config = Config(
+        options = Options(
             baseUrl = "https://stash.example/rest/awesome-graphs-api/latest",
             token = "secret-token",
             sinceDate = "2026-03-04",
@@ -145,7 +145,7 @@ class ExporterTest {
             retries = 0,
         ),
         exports = listOf(
-            ExportConfig(
+            Group(
                 path = listOf("Аутсорсинг", "ООО Ромашка"),
                 slugs = slugs,
             ),
@@ -160,12 +160,12 @@ class ExporterTest {
     private fun csvResult(
         slug: String,
         body: String,
-        requestUrl: String = "https://stash.example/users/$slug/commits/export/csv",
-    ): CsvDownloadResult = CsvDownloadResult(
+        url: String = "https://stash.example/users/$slug/commits/export/csv",
+    ): CsvResult = CsvResult(
         bytes = body.toByteArray(Charsets.UTF_8),
-        requestUrl = requestUrl,
-        statusCode = 200,
-        contentType = "text/csv",
-        attempts = 1,
+        url = url,
+        status = 200,
+        type = "text/csv",
+        tries = 1,
     )
 }

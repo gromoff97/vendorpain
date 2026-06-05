@@ -8,7 +8,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class PathValidatorTest {
+class PathRulesTest {
     @ParameterizedTest
     @ValueSource(
         strings = [
@@ -34,7 +34,7 @@ class PathValidatorTest {
     )
     fun `invalid cross platform directory segment fails`(segment: String) {
         val error = assertFailsWith<VpException> {
-            PathValidator().validateSegment(segment)
+            PathRules().check(segment)
         }
 
         assertEquals(ExitCode.INVALID_OUTPUT_PATH, error.exitCode)
@@ -43,7 +43,7 @@ class PathValidatorTest {
     @Test
     fun `control characters in directory segment fail`() {
         val error = assertFailsWith<VpException> {
-            PathValidator().validateSegment("vendor\u0000name")
+            PathRules().check("vendor\u0000name")
         }
 
         assertEquals(ExitCode.INVALID_OUTPUT_PATH, error.exitCode)
@@ -53,6 +53,6 @@ class PathValidatorTest {
     fun `unicode directory segment is accepted one to one`() {
         val segment = "ООО Ромашка"
 
-        assertEquals(segment, PathValidator().validateSegment(segment))
+        assertEquals(segment, PathRules().check(segment))
     }
 }
