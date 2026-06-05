@@ -1,0 +1,8 @@
+.gradle/
+.kotlin/
+build/
+tmp/
+
+*.log
+*.zip
+output/
