@@ -1,6 +1,10 @@
 options:
   baseUrl: "https://stash.example/rest/awesome-graphs-api/latest"
-  token: "paste-token-here"
+  auth:
+    method: "basic"
+    username: "bitbucket-login"
+    password: "bitbucket-password"
+    token: null
   sinceDate: "2026-03-04"
   untilDate: "2026-06-04"
   merges: "exclude"
@@ -8,8 +12,10 @@ options:
   outputDir: "output"
   archive: true
   debug: false
+  insecure: false
   timeoutSeconds: 60
   retries: 0
+  ssh: null
 
 exports:
   - path: ["Аутсорсинг", "ООО Ромашка"]
